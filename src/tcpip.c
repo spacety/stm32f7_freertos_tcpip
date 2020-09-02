@@ -31,14 +31,14 @@
 #include "miniprintf.h"
 
 char *usart_rx_buf = NULL;
-int usart_rx_len = 0, escape_mode = 0;
+int usart_rx_len = 0;
 gosh_cmd_handler gosh_cb = NULL;
 BaseType_t woken = pdTRUE;
 char gosh_prompt[64] = "# ";
 QueueHandle_t g_usart_rx_queue = NULL;
 uint32_t usart_console = 0;
 uint8_t freertos_started = 0;
-TaskHandle_t usart_handle = 0, usart_cmd_handle = 0;
+TaskHandle_t usart_handle = 0;
 uint8_t usart_console_enabled = 0;
 
 #define USART_RX_MAX		16
@@ -57,6 +57,7 @@ const uint8_t ucGatewayAddress[4] = {192, 168, 16, 1};
 const uint8_t ucDNSServerAddress[4] = {114, 114, 114, 114};
 
 extern const struct rcc_clock_scale rcc_3v3[RCC_CLOCK_3V3_END];
+
 static void
 clock_setup(void)
 {
@@ -154,7 +155,7 @@ process_cmd(char *cmd)
 void
 handle_console_input(char data)
 {
-	int finish = 0, i, r = 1;
+	int finish = 0, i;
 
 	if (usart_rx_buf == NULL) /* buffer is not ready */
 		return;
@@ -190,13 +191,8 @@ handle_console_input(char data)
 		usart_rx_buf[usart_rx_len ++] = data;
 	}
 
-	if (r == 1)
-		escape_mode = 0;
-
 	usart_rx_buf[usart_rx_len] = '\0'; /* terminate cmd line */
 	if (finish == 1 || (usart_rx_len >= (MAX_USART_RX_LEN - 1))) {
-		if (usart_rx_len > 0) {
-		}
 		console_puts("\r\n"); /* new line */
 		process_cmd(usart_rx_buf);
 		usart_rx_len = 0;
@@ -358,18 +354,6 @@ console_puts(char *ptr)
 }
 
 void
-usart_send_string(uint32_t usart, uint8_t *ptr)
-{
-	if (ptr == NULL || usart == 0)
-		return;
-
-	while (ptr[0]) {
-		usart_timeout_putc(usart, ptr[0]);
-		ptr ++;
-	}
-}
-
-void
 console_putc(char c)
 {
 	usart_timeout_putc(usart_console, c);
@@ -419,9 +403,6 @@ hex_dump(char *src, int len)
 		std_printf("\n");
 }
 
-extern uint32_t device_flash_size;
-extern char *flash_memory_ptr;
-
 static void
 simple_fault_handler(const char s)
 {
@@ -465,12 +446,6 @@ void sys_tick_handler(void) {
 	xPortSysTickHandler();
 }
 
-void delay_us(uint32_t us)
-{
-	for (int i = 0; i < us; i++)
-		__asm__("nop");
-}
-
 void
 setup_usart3(void)
 {
@@ -491,6 +466,7 @@ setup_usart3(void)
 
 	setup_usart_speed(USART3, 115200, 0);
 }
+
 static void
 setup_gosh_prompt(void)
 {

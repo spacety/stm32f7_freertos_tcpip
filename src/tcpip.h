@@ -1,5 +1,5 @@
-#ifndef __TIANYI_H__
-#define __TIANYI_H__
+#ifndef __TCPIP_H
+#define __TCPIP_H
 
 #include <stdint.h>
 #include <stdarg.h>
@@ -17,10 +17,6 @@
 #define MAGIC_55		0x55
 #define USART_LOOP		10000
 #define IRQ2NVIC_PRIOR(x)	((x)<<4)
-#define FLASH_PAGESIZE		4096 /* 4K Dual Bank*/
-#define FLASH_SIZE_REG		MMIO16(0x1FFF75E0)
-
-#define IWDG_TS			3000
 
 struct cmd_args {
 	char ptr[MAX_USART_RX_LEN];
@@ -31,37 +27,23 @@ struct cmd_args {
 typedef void (*gosh_cmd_handler)(char **, int);
 
 /* USART */
-uint32_t swapu32(uint32_t);
 void usart_send_hex(uint32_t, uint8_t *, int, int, int);
-void usart_send_string(uint32_t, uint8_t *);
 void setup_usart_speed(uint32_t, uint32_t, int);
 void append_usart_rx_queue(uint32_t, char);
-int start_usart_tasks(void);
 void setup_gosh_callback(gosh_cmd_handler);
 void generic_usart_handler(void *);
-void hook_init(void);
 
 int std_printf(const char *format, ...);
 
-int watcher_handler(void *p);
-
 int usart_timeout_putc(uint32_t, char);
 void console_puts(char *);
-void kiss_usart_putc(char);
 void console_putc(char);
-
-void delay_us(uint32_t);
-#define DELAY_US(x) delay_us(x*CYCLES_PER_US)
-
-#define lUDPLoggingPrintf(fmt, args...) do {;} while (0)
-
-void print_hex(uint8_t *, int);
 void hex_dump(char *, int);
 
 void start_usart_task(void);
-uint8_t get_boot_cause(void);
-
 void setup_usart3(void);
+
+#define lUDPLoggingPrintf(fmt, args...) do {;} while (0)
 
 #ifndef SYSCFG_PMC
 #define SYSCFG_PMC MMIO32(SYSCFG_BASE + 0x04)
